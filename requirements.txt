@@ -1,6 +1,6 @@
 langserve
 langgraph
-fastapi
+fastapi[standard]
 sse_starlette
 uvicorn
 openai==1.58.1
