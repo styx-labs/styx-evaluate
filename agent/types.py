@@ -41,7 +41,9 @@ class TraitEvaluationOutput(BaseModel):
 
 
 class AILinkedinJobDescription(BaseModel):
-    job_description: str
+    role_summary: str
+    skills: List[str]
+    requirements: List[str]
     sources: List[str]
 
 
@@ -119,7 +121,11 @@ class LinkedInProfile(BaseModel):
             context += "\n"
 
             if exp.summarized_job_description:
-                context += f"Likely Job Description: {exp.summarized_job_description.job_description}\n"
+                context += f"Likely Job Description: {exp.summarized_job_description.role_summary}\n"
+                context += (
+                    f"Skills: {', '.join(exp.summarized_job_description.skills)}\n"
+                )
+                context += f"Requirements: {', '.join(exp.summarized_job_description.requirements)}\n"
 
         for edu in self.education:
             context += (
