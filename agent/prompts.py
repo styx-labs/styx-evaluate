@@ -19,14 +19,13 @@ boolean_trait_evaluation_prompt = """
     You are also given a string of sources that contain information about the candidate.
 
     Output two values:
-    1. A value representing whether the candidate meets the trait: -1 for no, 0 for maybe, 1 for yes
+    1. A value representing whether the candidate meets the trait: false for no, true for yes
     2. A string of text supporting your evaluation, citing your list of sources. This should be no more than 100 words.
 
     Guidelines:
     - Let the trait description guide you to determine whether a candidate meets the bar to be considered as possessing the trait
-    - If there is sufficient evidence, or a high probability that the candidate possesses the trait, return 1
-    - If there is insufficient evidence supporting the candidate possessing the trait, return -1
-    - If there is some evidence, or if it could potentially be inferred that the candidate possesses the trait, return 0
+    - If there is sufficient evidence, or it can be reasonably inferred that the candidate meets everything described in the trait description, return true
+    - If there is insufficient evidence supporting the candidate possessing the trait, return false
     - Be thoughtful and meticulous in your evaluation, support your claims and carefully analyze the information provided
     - In the string of text, when you mention information from a source, include a citation by citing the number of the source that links to the url in clickable markdown format.
     - For example, if you use information from sources 3 and 7, cite them like this: [3](url), [7](url). 

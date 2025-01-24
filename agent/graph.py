@@ -1,7 +1,6 @@
 from langgraph.constants import Send
 from langgraph.graph import START, END, StateGraph
 from agent.helper_functions import (
-    get_recommendation,
     get_trait_evaluation,
     get_fit,
 )
@@ -18,7 +17,6 @@ def evaluate_trait(state: EvaluationState):
     source_str = state["source_str"]
     candidate_full_name = state["candidate_full_name"]
     candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
-    num_traits = len(state["key_traits"])
 
     content = get_trait_evaluation(
         trait.trait,  # Access as object attribute
@@ -26,31 +24,7 @@ def evaluate_trait(state: EvaluationState):
         candidate_full_name,
         candidate_profile.to_context_string(),
         source_str,
-        trait_type=trait.trait_type,
     )
-
-    if trait.trait_type == "TraitType.SCORE":
-        # Ensure numeric value for score type
-        value = (
-            float(content.value)
-            if isinstance(content.value, str)
-            else content.value
-        )
-        normalized_score = value
-    else:
-        # Handle both string and boolean representations
-        value = (
-            float(content.value)
-            if isinstance(content.value, str)
-            else content.value
-        )
-        # 1 is yes, -1 is no, 0 is maybe
-        if value == 1:
-            normalized_score = 10
-        elif value == -1:
-            normalized_score = 0
-        else:
-            normalized_score = 10 / (num_traits + 1)  # Some weird math so that yeses are always weighted more than maybes
 
     return {
         "completed_sections": [
@@ -58,8 +32,6 @@ def evaluate_trait(state: EvaluationState):
                 "section": trait.trait,
                 "content": content.evaluation,
                 "value": content.value,
-                "trait_type": trait.trait_type,
-                "normalized_score": normalized_score,
                 "required": trait.required,
             }
         ]
@@ -68,16 +40,10 @@ def evaluate_trait(state: EvaluationState):
 
 def write_recommendation(state: EvaluationState):
     candidate_full_name = state["candidate_full_name"]
-    completed_sections = state["completed_sections"]
     job_description = state["job_description"]
-    completed_sections_str = "\n\n".join([s["content"] for s in completed_sections])
     source_str = state["source_str"]
     ideal_profiles = state["ideal_profiles"]
     candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
-
-    summary = get_recommendation(
-        job_description, candidate_full_name, completed_sections_str
-    ).recommendation
 
     fit = get_fit(
         job_description,
@@ -87,10 +53,10 @@ def write_recommendation(state: EvaluationState):
         source_str,
     )
 
-    overall_score = sum([s["normalized_score"] for s in completed_sections])
-    overall_score += fit.fit_score
-
-    return {"summary": summary, "overall_score": overall_score, "fit": fit}
+    return {
+        "summary": fit.reasoning,
+        "fit": fit.fit_score,
+    }
 
 
 def compile_evaluation(state: EvaluationState):
@@ -99,20 +65,30 @@ def compile_evaluation(state: EvaluationState):
     citations = state["citations"]
     ordered_sections = []
 
+    required_met = 0
+    optional_met = 0
+
     for trait in key_traits:
         for section in completed_sections:
             if section["section"] == trait.trait:
                 ordered_section = {
                     "section": section["section"],
                     "content": section["content"],
-                    "trait_type": section["trait_type"],
                     "value": section["value"],
-                    "normalized_score": section["normalized_score"],
                     "required": section["required"],
                 }
                 ordered_sections.append(ordered_section)
+                if section["required"] and section["value"]:
+                    required_met += 1
+                elif not section["required"] and section["value"]:
+                    optional_met += 1
 
-    return {"sections": ordered_sections, "citations": citations}
+    return {
+        "sections": ordered_sections,
+        "citations": citations,
+        "required_met": required_met,
+        "optional_met": optional_met,
+    }
 
 
 def initiate_evaluation(state: EvaluationState):

@@ -2,26 +2,12 @@ from typing import List, Annotated, Optional, Union
 from typing_extensions import TypedDict
 import operator
 from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import date
-
-
-class TraitType(str, Enum):
-    BOOLEAN = "BOOLEAN"
-    SCORE = "SCORE"
-
-    @classmethod
-    def _missing_(cls, value: str):
-        # Handle uppercase values by converting to lowercase
-        if isinstance(value, str):
-            return cls(value.upper())
-        return None
 
 
 class KeyTrait(BaseModel):
     trait: str
     description: str
-    trait_type: TraitType
     required: bool = True
 
 
@@ -34,7 +20,7 @@ class RecommendationOutput(BaseModel):
 
 
 class TraitEvaluationOutput(BaseModel):
-    value: int  # Can be boolean (-1, 0, 1), score (0-10)
+    value: Union[bool]
     evaluation: str
 
 
@@ -188,7 +174,7 @@ class EvaluationState(TypedDict):
     section_description: str  # This is for parallelizing section writing
     source: str  # This is for parallelizing source validation
     citations: list[dict]
-    fit: FitOutput
+    fit: int
 
 
 class EvaluationInputState(TypedDict):
@@ -206,7 +192,8 @@ class EvaluationOutputState(TypedDict):
     citations: list[dict]
     sections: list[dict]
     summary: str
-    overall_score: float
+    required_met: int
+    optional_met: int
     source_str: str
     candidate_profile: LinkedInProfile
-    fit: FitOutput
+    fit: int

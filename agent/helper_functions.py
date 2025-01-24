@@ -42,7 +42,6 @@ def get_trait_evaluation(
     candidate_full_name: str,
     candidate_context: str,
     source_str: str,
-    trait_type: str = "SCORE",
 ) -> TraitEvaluationOutput:
     """
     Evaluate a candidate on a specific trait.
