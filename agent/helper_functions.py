@@ -5,10 +5,12 @@ from langsmith import traceable
 from agent.types import (
     RecommendationOutput,
     TraitEvaluationOutput,
+    FitOutput,
 )
 from agent.prompts import (
     recommendation_prompt,
-    trait_evaluation_prompt,
+    boolean_trait_evaluation_prompt,
+    fit_prompt,
 )
 
 
@@ -40,8 +42,6 @@ def get_trait_evaluation(
     candidate_full_name: str,
     candidate_context: str,
     source_str: str,
-    trait_type: str = "SCORE",  # Default to SCORE for backward compatibility
-    value_type: str = None,
 ) -> TraitEvaluationOutput:
     """
     Evaluate a candidate on a specific trait.
@@ -56,31 +56,48 @@ def get_trait_evaluation(
     """
     structured_llm = llm.with_structured_output(TraitEvaluationOutput)
 
-    # Build the evaluation prompt based on trait type
-    type_specific_instructions = ""
-    if trait_type == "BOOLEAN":
-        type_specific_instructions = (
-            "Evaluate if the candidate meets this requirement (true/false)."
-        )
-    elif trait_type == "SCORE":
-        type_specific_instructions = "Rate the candidate from 0-10 on this trait."
-
     return structured_llm.invoke(
         [
             SystemMessage(
-                content=trait_evaluation_prompt.format(
+                content=boolean_trait_evaluation_prompt.format(
                     section=trait,
                     trait_description=trait_description,
                     candidate_full_name=candidate_full_name,
                     candidate_context=candidate_context,
                     source_str=source_str,
-                    trait_type=trait_type,
-                    type_specific_instructions=type_specific_instructions,
-                    value_type=value_type,
                 )
             ),
             HumanMessage(
                 content="Evaluate the candidate on this trait based on the provided information."
             ),
+        ]
+    )
+
+
+@traceable(name="get_fit")
+def get_fit(
+    job_description: str,
+    ideal_profiles: list[str],
+    candidate_full_name: str,
+    candidate_context: str,
+    source_str: str,
+) -> FitOutput:
+    structured_llm = llm.with_structured_output(FitOutput)
+    ideal_profiles_str = ""
+    for i, profile in enumerate(ideal_profiles):
+        ideal_profiles_str += f"Ideal profile {i+1}:\n {profile}\n"
+        ideal_profiles_str += f"==============================================\n"
+    return structured_llm.invoke(
+        [
+            SystemMessage(
+                content=fit_prompt.format(
+                    job_description=job_description,
+                    ideal_profiles=ideal_profiles_str,
+                    candidate_full_name=candidate_full_name,
+                    candidate_context=candidate_context,
+                    source_str=source_str,
+                )
+            ),
+            HumanMessage(content=""),
         ]
     )

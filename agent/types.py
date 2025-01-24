@@ -2,27 +2,12 @@ from typing import List, Annotated, Optional, Union
 from typing_extensions import TypedDict
 import operator
 from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import date
-
-
-class TraitType(str, Enum):
-    BOOLEAN = "BOOLEAN"
-    SCORE = "SCORE"
-
-    @classmethod
-    def _missing_(cls, value: str):
-        # Handle uppercase values by converting to lowercase
-        if isinstance(value, str):
-            return cls(value.upper())
-        return None
 
 
 class KeyTrait(BaseModel):
     trait: str
     description: str
-    trait_type: TraitType
-    value_type: Optional[str] = None
     required: bool = True
 
 
@@ -35,9 +20,13 @@ class RecommendationOutput(BaseModel):
 
 
 class TraitEvaluationOutput(BaseModel):
-    value: Union[bool, int]  # Can be boolean, score (0-10)
+    value: Union[bool]
     evaluation: str
-    trait_type: str  # The type of trait being evaluated (BOOLEAN, SCORE)
+
+
+class FitOutput(BaseModel):
+    fit_score: int # score 0-4
+    reasoning: str
 
 
 class AILinkedinJobDescription(BaseModel):
@@ -170,6 +159,7 @@ class LinkedInProfile(BaseModel):
 class EvaluationState(TypedDict):
     source_str: str
     job_description: str
+    ideal_profiles: list[str]
     candidate_context: str
     candidate_profile: LinkedInProfile
     candidate_full_name: str
@@ -184,11 +174,13 @@ class EvaluationState(TypedDict):
     section_description: str  # This is for parallelizing section writing
     source: str  # This is for parallelizing source validation
     citations: list[dict]
+    fit: int
 
 
 class EvaluationInputState(TypedDict):
     source_str: str
     job_description: str
+    ideal_profiles: list[str]
     candidate_context: str
     candidate_profile: LinkedInProfile
     candidate_full_name: str
@@ -200,6 +192,8 @@ class EvaluationOutputState(TypedDict):
     citations: list[dict]
     sections: list[dict]
     summary: str
-    overall_score: float
+    required_met: int
+    optional_met: int
     source_str: str
     candidate_profile: LinkedInProfile
+    fit: int
