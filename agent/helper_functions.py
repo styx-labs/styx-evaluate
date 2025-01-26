@@ -1,6 +1,6 @@
-import re
 from langchain_core.messages import HumanMessage, SystemMessage
 from agent.azure_openai import llm
+from agent.deepseek import llm as deepseek_llm
 from langsmith import traceable
 from agent.types import (
     RecommendationOutput,
@@ -70,6 +70,51 @@ def get_trait_evaluation(
             HumanMessage(
                 content="Evaluate the candidate on this trait based on the provided information."
             ),
+        ]
+    )
+
+
+@traceable(name="get_trait_evaluation_deepseek")
+def get_trait_evaluation_deepseek(
+    trait: str,
+    trait_description: str,
+    candidate_full_name: str,
+    candidate_context: str,
+    source_str: str,
+) -> TraitEvaluationOutput:
+    """
+    Evaluate a candidate on a specific trait.
+
+    Args:
+        trait: The name of the trait
+        trait_description: Description of the trait and how to evaluate it
+        candidate_full_name: The candidate's full name
+        candidate_context: Basic context about the candidate
+        source_str: String containing all relevant sources about the candidate
+        trait_type: Type of trait (BOOLEAN, SCORE)
+    """
+    response = deepseek_llm.invoke(
+        [
+            SystemMessage(
+                content=boolean_trait_evaluation_prompt.format(
+                    section=trait,
+                    trait_description=trait_description,
+                    candidate_full_name=candidate_full_name,
+                    candidate_context=candidate_context,
+                    source_str=source_str,
+                )
+            ),
+            HumanMessage(
+                content="Evaluate the candidate on this trait based on the provided information."
+            ),
+        ]
+    )
+
+    structured_llm = llm.with_structured_output(TraitEvaluationOutput)
+
+    return structured_llm.invoke(
+        [
+            HumanMessage(content=response.content),
         ]
     )
 

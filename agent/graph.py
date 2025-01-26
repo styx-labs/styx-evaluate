@@ -2,6 +2,7 @@ from langgraph.constants import Send
 from langgraph.graph import START, END, StateGraph
 from agent.helper_functions import (
     get_trait_evaluation,
+    get_trait_evaluation_deepseek,
     get_fit,
 )
 from agent.types import (
@@ -18,7 +19,7 @@ def evaluate_trait(state: EvaluationState):
     candidate_full_name = state["candidate_full_name"]
     candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
 
-    content = get_trait_evaluation(
+    content = get_trait_evaluation_deepseek(
         trait.trait,  # Access as object attribute
         trait.description,  # Access as object attribute
         candidate_full_name,

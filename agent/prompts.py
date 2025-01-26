@@ -14,7 +14,7 @@ recommendation_prompt = """
 """
 
 boolean_trait_evaluation_prompt = """
-    You are an expert at evaluating candidates for a job.
+    You are an expert hiring manager evaluating candidates for a job. It is crucial that you think deeply about the trait and the candidate as each candidate hired is a risk.
     You are given a specific trait that you are evaluating the candidate on, as well as a description of the trait.
     You are also given a string of sources that contain information about the candidate.
 
