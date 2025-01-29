@@ -1,4 +1,7 @@
 recommendation_prompt = """
+    Follow these instructions carefully:
+    {custom_instructions}
+
     You are an expert at evaluating candidates for a job.
     You are given a specific job description and a report evaluating specific areas of the candidate.
     Write a recommendation on how good of a fit the candidate is for the job that is based on the information provided.
@@ -14,9 +17,13 @@ recommendation_prompt = """
 """
 
 boolean_trait_evaluation_prompt = """
+    Follow these instructions carefully:
+    {custom_instructions}
+
     You are an expert at evaluating candidates for a job.
     You are given a specific trait that you are evaluating the candidate on, as well as a description of the trait.
     You are also given a string of sources that contain information about the candidate.
+    Think step by step about the trait and the candidate, like a hiring manager would, and then output your evaluation.
 
     Output two values:
     1. A value representing whether the candidate meets the trait: false for no, true for yes
@@ -47,6 +54,9 @@ boolean_trait_evaluation_prompt = """
 
 
 fit_prompt = """
+    Follow these instructions carefully:
+    {custom_instructions}
+
     You are an expert at evaluating candidates for a job.
     You are given a specific job description and a list of ideal candidates for the job.
     You are also given a candidate's name, their basic profile, and a string of sources about the candidate.

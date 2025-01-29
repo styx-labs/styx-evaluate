@@ -17,6 +17,7 @@ def evaluate_trait(state: EvaluationState):
     source_str = state["source_str"]
     candidate_full_name = state["candidate_full_name"]
     candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
+    custom_instructions = state["custom_instructions"]
 
     content = get_trait_evaluation(
         trait.trait,  # Access as object attribute
@@ -24,6 +25,7 @@ def evaluate_trait(state: EvaluationState):
         candidate_full_name,
         candidate_profile.to_context_string(),
         source_str,
+        custom_instructions,
     )
 
     return {
@@ -44,6 +46,7 @@ def write_recommendation(state: EvaluationState):
     source_str = state["source_str"]
     ideal_profiles = state["ideal_profiles"]
     candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
+    custom_instructions = state["custom_instructions"]
 
     fit = get_fit(
         job_description,
@@ -51,6 +54,7 @@ def write_recommendation(state: EvaluationState):
         candidate_full_name,
         candidate_profile.to_context_string(),
         source_str,
+        custom_instructions,
     )
 
     return {
