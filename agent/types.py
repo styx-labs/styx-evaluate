@@ -175,7 +175,7 @@ class EvaluationState(TypedDict):
     source: str  # This is for parallelizing source validation
     citations: list[dict]
     fit: int
-    custom_instructions: str = None
+    custom_instructions: Optional[str] = None
 
 
 class EvaluationInputState(TypedDict):
@@ -187,7 +187,7 @@ class EvaluationInputState(TypedDict):
     candidate_full_name: str
     key_traits: list[KeyTrait]
     citations: list[dict]
-    custom_instructions: str = None
+    custom_instructions: Optional[str] = None
 
 
 class EvaluationOutputState(TypedDict):

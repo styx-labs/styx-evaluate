@@ -25,7 +25,7 @@ def evaluate_trait(state: EvaluationState):
         candidate_full_name,
         candidate_profile.to_context_string(),
         source_str,
-        custom_instructions,
+        custom_instructions if custom_instructions else "",
     )
 
     return {
@@ -54,7 +54,7 @@ def write_recommendation(state: EvaluationState):
         candidate_full_name,
         candidate_profile.to_context_string(),
         source_str,
-        custom_instructions,
+        custom_instructions if custom_instructions else "",
     )
 
     return {

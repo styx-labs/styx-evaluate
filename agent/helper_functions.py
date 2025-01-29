@@ -28,7 +28,9 @@ def get_recommendation(
                     job_description=job_description,
                     candidate_full_name=candidate_full_name,
                     completed_sections=completed_sections,
-                    custom_instructions=custom_instructions,
+                    custom_instructions=custom_instructions
+                    if custom_instructions
+                    else "",
                 )
             ),
             HumanMessage(
@@ -69,7 +71,9 @@ def get_trait_evaluation(
                     candidate_full_name=candidate_full_name,
                     candidate_context=candidate_context,
                     source_str=source_str,
-                    custom_instructions=custom_instructions,
+                    custom_instructions=custom_instructions
+                    if custom_instructions
+                    else "",
                 )
             ),
             HumanMessage(
@@ -102,7 +106,9 @@ def get_fit(
                     candidate_full_name=candidate_full_name,
                     candidate_context=candidate_context,
                     source_str=source_str,
-                    custom_instructions=custom_instructions,
+                    custom_instructions=custom_instructions
+                    if custom_instructions
+                    else "",
                 )
             ),
             HumanMessage(content=""),
