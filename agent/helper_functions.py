@@ -1,7 +1,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 from agent.azure_openai import llm
 from langsmith import traceable
-from agent.types import (
+from .types.base import (
     RecommendationOutput,
     TraitEvaluationOutput,
     FitOutput,
