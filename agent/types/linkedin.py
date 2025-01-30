@@ -1,7 +1,14 @@
-from typing import List, Optional, Dict
+"""
+LinkedIn data models with standardized serialization.
+"""
+
+from typing import List, Optional
 from datetime import date
 from .base import SerializableModel
-from .career import CareerMetrics
+from .career import (
+    CareerMetrics,
+    FundingStage,
+)
 
 
 class CompanyLocation(SerializableModel):
@@ -78,6 +85,108 @@ class LinkedInCompany(SerializableModel):
     affiliated_companies: List[AffiliatedCompany] = []
     funding_data: Optional[List[Funding]] = None
 
+    def _determine_funding_stage(self, funding) -> FundingStage:
+        """Helper method to determine funding stage from a funding round."""
+        funding_type = funding.funding_type.lower() if funding.funding_type else ""
+
+        if "ipo" in funding_type:
+            return FundingStage.IPO
+        elif "series d" in funding_type:
+            return FundingStage.SERIES_D
+        elif "series e" in funding_type:
+            return FundingStage.SERIES_E
+        elif "series f" in funding_type:
+            return FundingStage.SERIES_F
+        elif "series g" in funding_type:
+            return FundingStage.SERIES_G
+        elif "series h" in funding_type:
+            return FundingStage.SERIES_H
+        elif "series i" in funding_type:
+            return FundingStage.SERIES_I
+        elif "series j" in funding_type:
+            return FundingStage.SERIES_J
+        elif "series k" in funding_type:
+            return FundingStage.SERIES_K
+        elif "series c" in funding_type:
+            return FundingStage.SERIES_C
+        elif "series b" in funding_type:
+            return FundingStage.SERIES_B
+        elif "series a" in funding_type:
+            return FundingStage.SERIES_A
+        elif "pre seed" in funding_type:
+            return FundingStage.PRE_SEED
+        elif "seed" in funding_type:
+            return FundingStage.SEED
+        return FundingStage.UNKNOWN
+
+    @property
+    def funding_stage(self) -> FundingStage:
+        """Get the current funding stage of the company."""
+        if not self.funding_data:
+            return FundingStage.UNKNOWN
+
+        latest_funding = self.funding_data[-1]
+        return self._determine_funding_stage(latest_funding)
+
+    def get_funding_stage_at_date(self, target_date: date) -> FundingStage:
+        """Get the company's funding stage at a specific date."""
+        if not self.funding_data:
+            return FundingStage.UNKNOWN
+
+        current_stage = FundingStage.UNKNOWN
+
+        for funding in sorted(
+            [f for f in self.funding_data if f.announced_date],
+            key=lambda x: x.announced_date.get("year", 0) * 12
+            + x.announced_date.get("month", 0),
+        ):
+            try:
+                funding_date = date(
+                    year=funding.announced_date.get("year", 1900),
+                    month=funding.announced_date.get("month", 1),
+                    day=1,
+                )
+                if funding_date <= target_date:
+                    current_stage = self._determine_funding_stage(funding)
+                else:
+                    break
+            except (KeyError, ValueError, TypeError):
+                continue
+
+        return current_stage
+
+    def get_funding_stages_between_dates(
+        self, start_date: date, end_date: date = None
+    ) -> List[FundingStage]:
+        """Get the sequence of funding stages between two dates."""
+        if not self.funding_data:
+            return [FundingStage.UNKNOWN]
+
+        end_date = end_date or date.today()
+        relevant_rounds = []
+        current_stage = self.get_funding_stage_at_date(start_date)
+
+        for funding in sorted(
+            [f for f in self.funding_data if f.announced_date],
+            key=lambda x: x.announced_date.get("year", 0) * 12
+            + x.announced_date.get("month", 0),
+        ):
+            try:
+                funding_date = date(
+                    year=funding.announced_date.get("year", 1900),
+                    month=funding.announced_date.get("month", 1),
+                    day=1,
+                )
+                if start_date < funding_date <= end_date:
+                    stage = self._determine_funding_stage(funding)
+                    if stage != current_stage:
+                        relevant_rounds.append(stage)
+                        current_stage = stage
+            except (KeyError, ValueError, TypeError):
+                continue
+
+        return [current_stage] + relevant_rounds if relevant_rounds else [current_stage]
+
 
 class AILinkedinJobDescription(SerializableModel):
     role_summary: str
@@ -95,8 +204,48 @@ class LinkedInExperience(SerializableModel):
     location: Optional[str] = None
     company_linkedin_profile_url: Optional[str] = None
     company_data: Optional[LinkedInCompany] = None
-    company_ref: Optional[str] = None  # Firebase reference path
     summarized_job_description: Optional[AILinkedinJobDescription] = None
+    experience_tags: Optional[List[str]] = None
+
+    @property
+    def funding_stages_during_tenure(self) -> List[FundingStage]:
+        """Calculate the funding stages of the company during this person's tenure."""
+        if not self.company_data or not self.starts_at:
+            return [FundingStage.UNKNOWN]
+
+        return self.company_data.get_funding_stages_between_dates(
+            self.starts_at, self.ends_at
+        )
+
+    @property
+    def duration_months(self) -> Optional[int]:
+        """Calculate the duration of this experience in months."""
+        if not self.starts_at:
+            return None
+
+        end_date = self.ends_at or date.today()
+        months = (end_date.year - self.starts_at.year) * 12 + (
+            end_date.month - self.starts_at.month
+        )
+        return max(0, months)
+
+    def dict(self, *args, **kwargs) -> dict:
+        """Override dict to exclude company_data by default and include calculated fields."""
+        exclude = kwargs.get("exclude", set())
+        if "company_data" not in exclude:
+            exclude.add("company_data")
+        kwargs["exclude"] = exclude
+
+        # Get base dictionary
+        d = super().dict(*args, **kwargs)
+
+        # Add calculated fields
+        d["duration_months"] = self.duration_months
+        d["funding_stages_during_tenure"] = [
+            stage.value for stage in self.funding_stages_during_tenure
+        ]
+
+        return d
 
 
 class LinkedInEducation(SerializableModel):
@@ -119,45 +268,9 @@ class LinkedInProfile(SerializableModel):
     education: List[LinkedInEducation] = []
     career_metrics: Optional[CareerMetrics] = None
 
-    def __init__(self, **data):
-        super().__init__(**data)
-
-    def enrich_with_company_data(
-        self, company_data: Dict[str, LinkedInCompany]
-    ) -> None:
-        """Enrich the profile's experiences with company data."""
-        for experience in self.experiences:
-            if experience.company_linkedin_profile_url in company_data:
-                experience.company_data = company_data[
-                    experience.company_linkedin_profile_url
-                ]
-
     def to_context_string(self) -> str:
         """Convert the profile to a formatted string context."""
         context = ""
-
-        # Add career metrics section at the top
-        if self.career_metrics:
-            context += "Career Analysis:\n"
-            context += f"Total Experience: {self.career_metrics.total_experience_years:.1f} years\n"
-            context += f"Average Tenure: {self.career_metrics.average_tenure_years:.1f} years\n"
-            context += f"Current Tenure: {self.career_metrics.current_tenure_years:.1f} years\n"
-
-            if self.career_metrics.tech_stacks:
-                context += f"Technical Specialties: {', '.join(self.career_metrics.tech_stacks)}\n"
-
-            if self.career_metrics.career_tags:
-                context += f"Career Tags: {', '.join(sorted(self.career_metrics.career_tags))}\n"
-
-            if self.career_metrics.experience_by_stage:
-                context += "\nCompany Stage Experience:\n"
-                for exp in self.career_metrics.experience_by_stage:
-                    context += (
-                        f"- {exp.company_name}: {exp.funding_stage.value} stage "
-                        f"({exp.duration_months/12:.1f} years)\n"
-                    )
-
-            context += "\n---------\n"
 
         if self.occupation:
             context += f"Current Occupation: {self.occupation}\n\n---------\n"
@@ -219,3 +332,13 @@ class LinkedInProfile(SerializableModel):
                 context += "\n---------\n"
 
         return context
+
+    def dict(self, *args, **kwargs) -> dict:
+        """Override dict to handle nested serialization properly."""
+        # Get base dictionary
+        d = super().dict(*args, **kwargs)
+
+        # Manually serialize experiences to ensure their custom dict() method is called
+        d["experiences"] = [exp.dict(*args, **kwargs) for exp in self.experiences]
+
+        return d
