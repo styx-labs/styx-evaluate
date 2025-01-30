@@ -16,13 +16,13 @@ def evaluate_trait(state: EvaluationState):
     trait = state["trait"]  # This should be the full KeyTrait object
     source_str = state["source_str"]
     candidate_full_name = state["candidate_full_name"]
-    candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
+    candidate_context = state["candidate_context"]
 
     content = get_trait_evaluation(
         trait.trait,  # Access as object attribute
         trait.description,  # Access as object attribute
         candidate_full_name,
-        candidate_profile.to_context_string(),
+        candidate_context,
         source_str,
     )
 
