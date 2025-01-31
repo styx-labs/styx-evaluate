@@ -4,12 +4,12 @@ from agent.helper_functions import (
     get_trait_evaluation,
     get_fit,
 )
-from .types.evaluation import (
+from models.evaluation import (
     EvaluationState,
     EvaluationInputState,
     EvaluationOutputState,
 )
-from .types.linkedin import LinkedInProfile
+from models.linkedin import LinkedInProfile
 
 
 def evaluate_trait(state: EvaluationState):
