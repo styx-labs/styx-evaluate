@@ -1,5 +1,5 @@
 from langchain_core.messages import HumanMessage, SystemMessage
-from agent.azure_openai import llm
+from agent.azure_openai import llm_4o
 from langsmith import traceable
 from models.base import (
     RecommendationOutput,
@@ -20,7 +20,7 @@ def get_recommendation(
     completed_sections: str,
     custom_instructions: str,
 ) -> RecommendationOutput:
-    structured_llm = llm.with_structured_output(RecommendationOutput)
+    structured_llm = llm_4o.with_structured_output(RecommendationOutput)
     return structured_llm.invoke(
         [
             SystemMessage(
@@ -60,7 +60,7 @@ def get_trait_evaluation(
         source_str: String containing all relevant sources about the candidate
         custom_instructions: Custom instructions for the evaluation
     """
-    structured_llm = llm.with_structured_output(TraitEvaluationOutput)
+    structured_llm = llm_4o.with_structured_output(TraitEvaluationOutput)
 
     return structured_llm.invoke(
         [
@@ -92,7 +92,7 @@ def get_fit(
     source_str: str,
     custom_instructions: str,
 ) -> FitOutput:
-    structured_llm = llm.with_structured_output(FitOutput)
+    structured_llm = llm_4o.with_structured_output(FitOutput)
     ideal_profiles_str = ""
     for i, profile in enumerate(ideal_profiles):
         ideal_profiles_str += f"Ideal profile {i+1}:\n {profile}\n"
