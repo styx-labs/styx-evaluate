@@ -7,3 +7,4 @@ openai==1.58.1
 langchain-openai==0.2.14
 python-dotenv==1.0.0
 google-cloud-secret-manager
+langchain-google-vertexai
