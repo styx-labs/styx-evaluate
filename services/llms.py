@@ -1,8 +1,8 @@
-from typing import Optional, Any, List
+from typing import Optional, Any
 from openai import AzureOpenAI
 from langchain_openai import AzureChatOpenAI
 from langchain_core.language_models import BaseLanguageModel
-from agent.get_secret import get_secret
+from services.get_secret import get_secret
 from langchain_google_vertexai import ChatVertexAI
 
 
@@ -28,8 +28,11 @@ gemini_2_flash = ChatVertexAI(
     model="gemini-2.0-flash-001",
 )
 
+
 class LLMWithFallbacks:
-    def __init__(self, primary_llm: BaseLanguageModel, fallbacks: List[BaseLanguageModel]):
+    def __init__(
+        self, primary_llm: BaseLanguageModel, fallbacks: list[BaseLanguageModel]
+    ):
         self.primary_llm = primary_llm
         self.fallbacks = fallbacks
 

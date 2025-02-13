@@ -9,52 +9,35 @@ from models.evaluation import (
     EvaluationInputState,
     EvaluationOutputState,
 )
-from models.linkedin import LinkedInProfile
 
 
 def evaluate_trait(state: EvaluationState):
-    trait = state["trait"]  # This should be the full KeyTrait object
-    source_str = state["source_str"]
-    candidate_full_name = state["candidate_full_name"]
-    candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
-    custom_instructions = state["custom_instructions"]
-
     content = get_trait_evaluation(
-        trait.trait,  # Access as object attribute
-        trait.description,  # Access as object attribute
-        candidate_full_name,
-        candidate_profile.to_context_string(),
-        source_str,
-        custom_instructions if custom_instructions else "",
+        state.trait,
+        state.candidate_profile,
+        state.source_str,
+        state.custom_instructions,
+        state.job,
     )
 
     return {
-        "completed_sections": [
+        "completed_traits": [
             {
-                "section": trait.trait,
+                "trait": state.trait.trait,
                 "content": content.evaluation,
                 "value": content.value,
-                "required": trait.required,
+                "required": state.trait.required,
             }
         ]
     }
 
 
 def write_recommendation(state: EvaluationState):
-    candidate_full_name = state["candidate_full_name"]
-    job_description = state["job_description"]
-    source_str = state["source_str"]
-    ideal_profiles = state["ideal_profiles"]
-    candidate_profile = LinkedInProfile.from_dict(state["candidate_profile"])
-    custom_instructions = state["custom_instructions"]
-
     fit = get_fit(
-        job_description,
-        ideal_profiles,
-        candidate_full_name,
-        candidate_profile.to_context_string(),
-        source_str,
-        custom_instructions if custom_instructions else "",
+        state.job,
+        state.candidate_profile,
+        state.source_str,
+        state.custom_instructions,
     )
 
     return {
@@ -64,32 +47,33 @@ def write_recommendation(state: EvaluationState):
 
 
 def compile_evaluation(state: EvaluationState):
-    key_traits = state["key_traits"]
-    completed_sections = state["completed_sections"]
-    citations = state["citations"]
-    ordered_sections = []
+    # Create lookup dict for completed traits
+    completed_traits_dict = {trait["trait"]: trait for trait in state.completed_traits}
 
+    # Map traits in order while tracking counts
+    ordered_traits = []
     required_met = 0
     optional_met = 0
 
-    for trait in key_traits:
-        for section in completed_sections:
-            if section["section"] == trait.trait:
-                ordered_section = {
-                    "section": section["section"],
-                    "content": section["content"],
-                    "value": section["value"],
-                    "required": section["required"],
+    for trait in state.job.key_traits:
+        if completed_trait := completed_traits_dict.get(trait.trait):
+            ordered_traits.append(
+                {
+                    "section": completed_trait["trait"],
+                    "content": completed_trait["content"],
+                    "value": completed_trait["value"],
+                    "required": completed_trait["required"],
                 }
-                ordered_sections.append(ordered_section)
-                if section["required"] and section["value"]:
+            )
+
+            if completed_trait["value"]:
+                if completed_trait["required"]:
                     required_met += 1
-                elif not section["required"] and section["value"]:
+                else:
                     optional_met += 1
 
     return {
-        "sections": ordered_sections,
-        "citations": citations,
+        "traits": ordered_traits,
         "required_met": required_met,
         "optional_met": optional_met,
     }
@@ -97,11 +81,8 @@ def compile_evaluation(state: EvaluationState):
 
 def initiate_evaluation(state: EvaluationState):
     return [
-        Send(
-            "evaluate_trait",
-            {"trait": t, **state},  # Pass the entire KeyTrait object
-        )
-        for t in state["key_traits"]
+        Send("evaluate_trait", state.model_copy(update={"trait": trait}))
+        for trait in state.job.key_traits
     ]
 
 

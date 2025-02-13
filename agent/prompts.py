@@ -1,24 +1,12 @@
-recommendation_prompt = """
+trait_evaluation_prompt = """
     Follow these instructions carefully:
     {custom_instructions}
 
-    You are an expert at evaluating candidates for a job.
-    You are given a specific job description and a report evaluating specific areas of the candidate.
-    Write a recommendation on how good of a fit the candidate is for the job that is based on the information provided.
-    This should be a short 2-3 sentence evaluation on how well the candidate fits the job description based on the information provided.
-    Do not assume the candidate's gender, keep your evaluation gender-neutral.
+    Here is feedback from the hiring manager overall, keep it in mind when evaluating the trait:
+    {pipeline_feedback}
 
-    Here is the job description:
-    {job_description}
-    Here is the candidate's name:
-    {candidate_full_name}
-    Here is the report about the candidate:
-    {completed_sections}
-"""
-
-boolean_trait_evaluation_prompt = """
-    Follow these instructions carefully:
-    {custom_instructions}
+    Here are profiles of candidates that have been deemed good and bad fits for this job:
+    {calibrated_profiles}
 
     You are an expert at evaluating candidates for a job.
     You are given a specific trait that you are evaluating the candidate on, as well as a description of the trait.
@@ -41,17 +29,16 @@ boolean_trait_evaluation_prompt = """
     - Do not assume the candidate's gender, keep your evaluation gender-neutral.
 
     Here is the trait you are evaluating the candidate on:
-    {section}
+    {trait}
     Here is the description of the trait:
     {trait_description}
     Here is the candidate's name:
     {candidate_full_name}
     Here is the candidate's basic profile:
     {candidate_context}
-    Here are the sources about the candidate:
+    Here are the sources about the candidate.
     {source_str}
 """
-
 
 fit_prompt = """
     Follow these instructions carefully:
@@ -60,7 +47,10 @@ fit_prompt = """
     You are an expert at evaluating candidates for a job.
     You are given a specific job description and a list of ideal candidates for the job.
     You are also given a candidate's name, their basic profile, and a string of sources about the candidate.
-    
+
+    Here is feedback from the hiring manager on previous fit scores:
+    {pipeline_feedback}
+
     Output two values:
     - A score from 0-4 on how well the candidate fits the job given the information provided
     - A string of text outlining your reasoning for the score, without directly referencing the score. This should be no more than 100 words.
@@ -76,8 +66,10 @@ fit_prompt = """
 
     Here is the job description:
     {job_description}
-    Here is the list of ideal candidates for the job:
-    {ideal_profiles}
+
+    Here are profiles of candidates that have been deemed good and bad fits for this job:
+    {calibrated_profiles}
+    
     Here is the candidate's name:
     {candidate_full_name}
     Here is the candidate's basic profile:
