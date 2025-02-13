@@ -11,6 +11,17 @@ from models.evaluation import (
 )
 
 
+def dummy_start(state: EvaluationState):
+    return {}
+
+
+def initiate_evaluation(state: EvaluationState):
+    return [
+        Send("evaluate_section", state.model_copy(update={"section": section}))
+        for section in state.job.key_traits
+    ]
+
+
 def evaluate_section(state: EvaluationState):
     content = get_trait_evaluation(
         state.section,
@@ -79,17 +90,6 @@ def compile_evaluation(state: EvaluationState):
         "required_met": required_met,
         "optional_met": optional_met,
     }
-
-
-def initiate_evaluation(state: EvaluationState):
-    return [
-        Send("evaluate_section", state.model_copy(update={"section": section}))
-        for section in state.job.key_traits
-    ]
-
-
-def dummy_start(state: EvaluationState):
-    return {}
 
 
 builder = StateGraph(
