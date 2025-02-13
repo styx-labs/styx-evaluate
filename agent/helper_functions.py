@@ -16,7 +16,7 @@ from agent.prompts import (
 @traceable(name="get_trait_evaluation")
 def get_trait_evaluation(
     trait: KeyTrait,
-    candidate_profile: LinkedInProfile,
+    profile: LinkedInProfile,
     source_str: str,
     custom_instructions: str,
     job: Job,
@@ -40,8 +40,8 @@ def get_trait_evaluation(
                 content=trait_evaluation_prompt.format(
                     trait=trait.trait,
                     trait_description=trait.description,
-                    candidate_full_name=candidate_profile.full_name,
-                    candidate_context=candidate_profile.to_context_string(),
+                    candidate_full_name=profile.full_name,
+                    candidate_context=profile.to_context_string(),
                     source_str=source_str if source_str != "linkedin_only" else "",
                     custom_instructions=custom_instructions,
                     pipeline_feedback=[
@@ -61,7 +61,7 @@ def get_trait_evaluation(
 @traceable(name="get_fit")
 def get_fit(
     job: Job,
-    candidate_profile: LinkedInProfile,
+    profile: LinkedInProfile,
     source_str: str,
     custom_instructions: str,
 ) -> FitOutput:
@@ -78,8 +78,8 @@ def get_fit(
                     pipeline_feedback=[
                         str(feedback) for feedback in job.pipeline_feedback
                     ],
-                    candidate_full_name=candidate_profile.full_name,
-                    candidate_context=candidate_profile.to_context_string(),
+                    candidate_full_name=profile.full_name,
+                    candidate_context=profile.to_context_string(),
                     source_str=source_str,
                     custom_instructions=custom_instructions,
                 )

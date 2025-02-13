@@ -14,7 +14,7 @@ from models.evaluation import (
 def evaluate_section(state: EvaluationState):
     content = get_trait_evaluation(
         state.section,
-        state.candidate_profile,
+        state.profile,
         state.source_str,
         state.custom_instructions,
         state.job,
@@ -35,7 +35,7 @@ def evaluate_section(state: EvaluationState):
 def write_recommendation(state: EvaluationState):
     fit = get_fit(
         state.job,
-        state.candidate_profile,
+        state.profile,
         state.source_str,
         state.custom_instructions,
     )
