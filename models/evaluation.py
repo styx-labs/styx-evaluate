@@ -14,12 +14,12 @@ class EvaluationState(SerializableModel):
     custom_instructions: Optional[str] = None
 
     # Intermediate
-    completed_traits: Annotated[list[dict], operator.add] = []
-    trait: Optional[KeyTrait] = None
+    completed_sections: Annotated[list[dict], operator.add] = []
+    section: Optional[KeyTrait] = None
 
     # Output
     citations: Optional[list[dict]] = None
-    traits: Optional[list[dict]] = None
+    sections: Optional[list[dict]] = None
     summary: Optional[str] = None
     required_met: Optional[int] = None
     optional_met: Optional[int] = None
@@ -36,7 +36,7 @@ class EvaluationInputState(SerializableModel):
 
 class EvaluationOutputState(SerializableModel):
     citations: list[dict]
-    traits: list[dict]
+    sections: list[dict]
     summary: str
     required_met: int
     optional_met: int

@@ -11,9 +11,9 @@ from models.evaluation import (
 )
 
 
-def evaluate_trait(state: EvaluationState):
+def evaluate_section(state: EvaluationState):
     content = get_trait_evaluation(
-        state.trait,
+        state.section,
         state.candidate_profile,
         state.source_str,
         state.custom_instructions,
@@ -21,12 +21,12 @@ def evaluate_trait(state: EvaluationState):
     )
 
     return {
-        "completed_traits": [
+        "completed_sections": [
             {
-                "trait": state.trait.trait,
+                "section": state.section.trait,
                 "content": content.evaluation,
                 "value": content.value,
-                "required": state.trait.required,
+                "required": state.section.required,
             }
         ]
     }
@@ -48,32 +48,34 @@ def write_recommendation(state: EvaluationState):
 
 def compile_evaluation(state: EvaluationState):
     # Create lookup dict for completed traits
-    completed_traits_dict = {trait["trait"]: trait for trait in state.completed_traits}
+    completed_sections_dict = {
+        section["section"]: section for section in state.completed_sections
+    }
 
-    # Map traits in order while tracking counts
-    ordered_traits = []
+    # Map sections in order while tracking counts
+    ordered_sections = []
     required_met = 0
     optional_met = 0
 
     for trait in state.job.key_traits:
-        if completed_trait := completed_traits_dict.get(trait.trait):
-            ordered_traits.append(
+        if completed_section := completed_sections_dict.get(trait.trait):
+            ordered_sections.append(
                 {
-                    "section": completed_trait["trait"],
-                    "content": completed_trait["content"],
-                    "value": completed_trait["value"],
-                    "required": completed_trait["required"],
+                    "section": completed_section["section"],
+                    "content": completed_section["content"],
+                    "value": completed_section["value"],
+                    "required": completed_section["required"],
                 }
             )
 
-            if completed_trait["value"]:
-                if completed_trait["required"]:
+            if completed_section["value"]:
+                if completed_section["required"]:
                     required_met += 1
                 else:
                     optional_met += 1
 
     return {
-        "traits": ordered_traits,
+        "sections": ordered_sections,
         "required_met": required_met,
         "optional_met": optional_met,
     }
@@ -81,8 +83,8 @@ def compile_evaluation(state: EvaluationState):
 
 def initiate_evaluation(state: EvaluationState):
     return [
-        Send("evaluate_trait", state.model_copy(update={"trait": trait}))
-        for trait in state.job.key_traits
+        Send("evaluate_section", state.model_copy(update={"section": section}))
+        for section in state.job.key_traits
     ]
 
 
@@ -95,13 +97,13 @@ builder = StateGraph(
 )
 
 builder.add_node("dummy_start", dummy_start)
-builder.add_node("evaluate_trait", evaluate_trait)
+builder.add_node("evaluate_section", evaluate_section)
 builder.add_node("write_recommendation", write_recommendation)
 builder.add_node("compile_evaluation", compile_evaluation)
 
 builder.add_edge(START, "dummy_start")
-builder.add_conditional_edges("dummy_start", initiate_evaluation, ["evaluate_trait"])
-builder.add_edge("evaluate_trait", "write_recommendation")
+builder.add_conditional_edges("dummy_start", initiate_evaluation, ["evaluate_section"])
+builder.add_edge("evaluate_section", "write_recommendation")
 builder.add_edge("write_recommendation", "compile_evaluation")
 builder.add_edge("compile_evaluation", END)
 
