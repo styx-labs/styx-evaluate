@@ -44,9 +44,6 @@ def get_trait_evaluation(
                     candidate_context=profile.to_context_string(),
                     source_str=source_str if source_str != "linkedin_only" else "",
                     custom_instructions=custom_instructions,
-                    pipeline_feedback=[
-                        str(feedback) for feedback in job.pipeline_feedback
-                    ],
                     calibrated_profiles=[
                         str(calibrated_profile)
                         for calibrated_profile in job.calibrated_profiles
@@ -74,9 +71,6 @@ def get_fit(
                     calibrated_profiles=[
                         str(calibrated_profile)
                         for calibrated_profile in job.calibrated_profiles
-                    ],
-                    pipeline_feedback=[
-                        str(feedback) for feedback in job.pipeline_feedback
                     ],
                     candidate_full_name=profile.full_name,
                     candidate_context=profile.to_context_string(),

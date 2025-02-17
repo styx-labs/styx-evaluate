@@ -1,13 +1,4 @@
 trait_evaluation_prompt = """
-    Follow these instructions carefully:
-    {custom_instructions}
-
-    Here is feedback from the hiring manager overall, keep it in mind when evaluating the trait:
-    {pipeline_feedback}
-
-    Here are profiles of candidates that have been deemed good and bad fits for this job:
-    {calibrated_profiles}
-
     You are an expert at evaluating candidates for a job.
     You are given a specific trait that you are evaluating the candidate on, as well as a description of the trait.
     You are also given a string of sources that contain information about the candidate.
@@ -27,6 +18,7 @@ trait_evaluation_prompt = """
     - Don't include a citation if you are not referencing a source.
     - Cite sources liberally.
     - Do not assume the candidate's gender, keep your evaluation gender-neutral.
+    - {custom_instructions}
 
     Here is the trait you are evaluating the candidate on:
     {trait}
@@ -38,18 +30,15 @@ trait_evaluation_prompt = """
     {candidate_context}
     Here are the sources about the candidate.
     {source_str}
+
+    Here are profiles of candidates that have been deemed good and bad fits for this job. Use this as further context to evaluate the candidate:
+    {calibrated_profiles}
 """
 
 fit_prompt = """
-    Follow these instructions carefully:
-    {custom_instructions}
-
     You are an expert at evaluating candidates for a job.
     You are given a specific job description and a list of ideal candidates for the job.
     You are also given a candidate's name, their basic profile, and a string of sources about the candidate.
-
-    Here is feedback from the hiring manager on previous fit scores:
-    {pipeline_feedback}
 
     Output two values:
     - A score from 0-4 on how well the candidate fits the job given the information provided
@@ -63,12 +52,11 @@ fit_prompt = """
     - A score of 4 means the candidate is an ideal fit for the job - they match the job description and the ideal profiles perfectly
     - Be thoughtful and meticulous in your evaluation, support your claims and carefully analyze the information provided
     - Do not assume the candidate's gender, keep your evaluation gender-neutral.
+    - {custom_instructions}
 
     Here is the job description:
     {job_description}
 
-    Here are profiles of candidates that have been deemed good and bad fits for this job:
-    {calibrated_profiles}
     
     Here is the candidate's name:
     {candidate_full_name}
@@ -76,4 +64,7 @@ fit_prompt = """
     {candidate_context}
     Here are the sources about the candidate:
     {source_str}
+
+    Here are profiles of candidates that have been deemed good and bad fits for this job. Use this as further context to evaluate the candidate:
+    {calibrated_profiles}
 """
