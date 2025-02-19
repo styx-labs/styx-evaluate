@@ -1,53 +1,25 @@
 from langchain_core.messages import HumanMessage, SystemMessage
-from agent.llms import llm
+from services.llms import llm
 from langsmith import traceable
 from models.base import (
-    RecommendationOutput,
     TraitEvaluationOutput,
     FitOutput,
 )
+from models.jobs import Job, KeyTrait
+from models.linkedin import LinkedInProfile
 from agent.prompts import (
-    recommendation_prompt,
-    boolean_trait_evaluation_prompt,
+    trait_evaluation_prompt,
     fit_prompt,
 )
 
 
-@traceable(name="get_recommendation")
-def get_recommendation(
-    job_description: str,
-    candidate_full_name: str,
-    completed_sections: str,
-    custom_instructions: str,
-) -> RecommendationOutput:
-    structured_llm = llm.with_structured_output(RecommendationOutput)
-    return structured_llm.invoke(
-        [
-            SystemMessage(
-                content=recommendation_prompt.format(
-                    job_description=job_description,
-                    candidate_full_name=candidate_full_name,
-                    completed_sections=completed_sections,
-                    custom_instructions=custom_instructions
-                    if custom_instructions
-                    else "",
-                )
-            ),
-            HumanMessage(
-                content="Write a recommendation on how good of a fit the candidate is for the job based on the provided information."
-            ),
-        ]
-    )
-
-
 @traceable(name="get_trait_evaluation")
 def get_trait_evaluation(
-    trait: str,
-    trait_description: str,
-    candidate_full_name: str,
-    candidate_context: str,
+    trait: KeyTrait,
+    profile: LinkedInProfile,
     source_str: str,
     custom_instructions: str,
+    job: Job,
 ) -> TraitEvaluationOutput:
     """
     Evaluate a candidate on a specific trait.
@@ -65,50 +37,45 @@ def get_trait_evaluation(
     return structured_llm.invoke(
         [
             SystemMessage(
-                content=boolean_trait_evaluation_prompt.format(
-                    section=trait,
-                    trait_description=trait_description,
-                    candidate_full_name=candidate_full_name,
-                    candidate_context=candidate_context,
-                    source_str=source_str,
-                    custom_instructions=custom_instructions
-                    if custom_instructions
-                    else "",
+                content=trait_evaluation_prompt.format(
+                    trait=trait.trait,
+                    trait_description=trait.description,
+                    candidate_full_name=profile.full_name,
+                    candidate_context=profile.to_context_string(),
+                    source_str=source_str if source_str != "linkedin_only" else "",
+                    custom_instructions=custom_instructions,
+                    calibrated_profiles=[
+                        str(calibrated_profile)
+                        for calibrated_profile in job.calibrated_profiles
+                    ],
                 )
             ),
-            HumanMessage(
-                content="Evaluate the candidate on this trait based on the provided information."
-            ),
+            HumanMessage(content=""),
         ]
     )
 
 
 @traceable(name="get_fit")
 def get_fit(
-    job_description: str,
-    ideal_profiles: list[str],
-    candidate_full_name: str,
-    candidate_context: str,
+    job: Job,
+    profile: LinkedInProfile,
     source_str: str,
     custom_instructions: str,
 ) -> FitOutput:
     structured_llm = llm.with_structured_output(FitOutput)
-    ideal_profiles_str = ""
-    for i, profile in enumerate(ideal_profiles):
-        ideal_profiles_str += f"Ideal profile {i+1}:\n {profile}\n"
-        ideal_profiles_str += f"==============================================\n"
     return structured_llm.invoke(
         [
             SystemMessage(
                 content=fit_prompt.format(
-                    job_description=job_description,
-                    ideal_profiles=ideal_profiles_str,
-                    candidate_full_name=candidate_full_name,
-                    candidate_context=candidate_context,
+                    job_description=job.job_description,
+                    calibrated_profiles=[
+                        str(calibrated_profile)
+                        for calibrated_profile in job.calibrated_profiles
+                    ],
+                    candidate_full_name=profile.full_name,
+                    candidate_context=profile.to_context_string(),
                     source_str=source_str,
-                    custom_instructions=custom_instructions
-                    if custom_instructions
-                    else "",
+                    custom_instructions=custom_instructions,
                 )
             ),
             HumanMessage(content=""),
